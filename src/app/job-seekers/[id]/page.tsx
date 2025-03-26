@@ -5,17 +5,20 @@ import { useJobSeekers } from '../../../bounded-contexts/job-seeker-context/hook
 import Link from 'next/link'
 import { JobSeeker } from '../../../bounded-contexts/job-seeker-context/domain/types'
 
-export default function JobSeekerProfilePage({ params }: { params: { id: string } }) {
+type Params = Promise<{ id: string }>
+
+export default async function JobSeekerProfilePage({ params }: { params: Params }) {
+  const { id } = await params;
   const [jobSeeker, setJobSeeker] = useState<JobSeeker | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { getJobSeekerById } = useJobSeekers()
-  
+
   useEffect(() => {
     const fetchJobSeeker = async () => {
       try {
         setLoading(true)
-        const seeker = await getJobSeekerById(params.id)
+        const seeker = await getJobSeekerById(id)
         if (seeker) {
           setJobSeeker(seeker)
         } else {
@@ -28,10 +31,10 @@ export default function JobSeekerProfilePage({ params }: { params: { id: string 
         setLoading(false)
       }
     }
-    
+
     fetchJobSeeker()
-  }, [params.id, getJobSeekerById])
-  
+  }, [id, getJobSeekerById])
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -41,7 +44,7 @@ export default function JobSeekerProfilePage({ params }: { params: { id: string 
       </div>
     )
   }
-  
+
   if (error || !jobSeeker) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -56,7 +59,7 @@ export default function JobSeekerProfilePage({ params }: { params: { id: string 
       </div>
     )
   }
-  
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-4">
@@ -64,15 +67,15 @@ export default function JobSeekerProfilePage({ params }: { params: { id: string 
           &larr; Back to Job Seekers
         </Link>
       </div>
-      
+
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         {/* Header */}
         <div className="bg-green-600 text-white p-6">
           <div className="flex flex-col md:flex-row items-center md:items-start">
             {jobSeeker.profilePictureUrl ? (
               <div className="w-24 h-24 rounded-full bg-white overflow-hidden mb-4 md:mb-0 md:mr-6">
-                <img 
-                  src={jobSeeker.profilePictureUrl} 
+                <img
+                  src={jobSeeker.profilePictureUrl}
                   alt={`${jobSeeker.firstName} ${jobSeeker.lastName}`}
                   className="w-full h-full object-cover"
                 />
@@ -94,7 +97,7 @@ export default function JobSeekerProfilePage({ params }: { params: { id: string 
             </div>
           </div>
         </div>
-        
+
         {/* Content */}
         <div className="p-6">
           {/* Summary */}
@@ -102,7 +105,7 @@ export default function JobSeekerProfilePage({ params }: { params: { id: string 
             <h2 className="text-2xl font-semibold mb-3">Summary</h2>
             <p className="text-gray-700">{jobSeeker.summary}</p>
           </div>
-          
+
           {/* Skills */}
           <div className="mb-8">
             <h2 className="text-2xl font-semibold mb-3">Skills</h2>
@@ -114,7 +117,7 @@ export default function JobSeekerProfilePage({ params }: { params: { id: string 
               ))}
             </div>
           </div>
-          
+
           {/* Experience */}
           <div className="mb-8">
             <h2 className="text-2xl font-semibold mb-3">Work Experience</h2>
@@ -125,10 +128,10 @@ export default function JobSeekerProfilePage({ params }: { params: { id: string 
                     <h3 className="text-xl font-medium">{exp.title}</h3>
                     <p className="text-gray-700">{exp.company} • {exp.location}</p>
                     <p className="text-gray-500">
-                      {new Date(exp.startDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long' })} - 
-                      {exp.current 
+                      {new Date(exp.startDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long' })} -
+                      {exp.current
                         ? ' Present'
-                        : exp.endDate 
+                        : exp.endDate
                           ? ` ${new Date(exp.endDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long' })}`
                           : ''
                       }
@@ -150,7 +153,7 @@ export default function JobSeekerProfilePage({ params }: { params: { id: string 
               <p className="text-gray-500">No work experience listed</p>
             )}
           </div>
-          
+
           {/* Education */}
           <div className="mb-8">
             <h2 className="text-2xl font-semibold mb-3">Education</h2>
@@ -161,10 +164,10 @@ export default function JobSeekerProfilePage({ params }: { params: { id: string 
                     <h3 className="text-xl font-medium">{edu.degree} in {edu.fieldOfStudy}</h3>
                     <p className="text-gray-700">{edu.institution}</p>
                     <p className="text-gray-500">
-                      {new Date(edu.startDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long' })} - 
-                      {edu.current 
+                      {new Date(edu.startDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long' })} -
+                      {edu.current
                         ? ' Present'
-                        : edu.endDate 
+                        : edu.endDate
                           ? ` ${new Date(edu.endDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long' })}`
                           : ''
                       }
@@ -177,7 +180,7 @@ export default function JobSeekerProfilePage({ params }: { params: { id: string 
               <p className="text-gray-500">No education listed</p>
             )}
           </div>
-          
+
           {/* Certifications */}
           {jobSeeker.certifications && jobSeeker.certifications.length > 0 && (
             <div className="mb-8">
@@ -192,9 +195,9 @@ export default function JobSeekerProfilePage({ params }: { params: { id: string 
                       {cert.expirationDate && ` • Expires: ${new Date(cert.expirationDate).toLocaleDateString()}`}
                     </p>
                     {cert.credentialUrl && (
-                      <a 
-                        href={cert.credentialUrl} 
-                        target="_blank" 
+                      <a
+                        href={cert.credentialUrl}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="text-green-600 hover:underline mt-1 inline-block"
                       >
@@ -206,7 +209,7 @@ export default function JobSeekerProfilePage({ params }: { params: { id: string 
               </div>
             </div>
           )}
-          
+
           {/* Languages */}
           {jobSeeker.languages && jobSeeker.languages.length > 0 && (
             <div className="mb-8">
@@ -223,7 +226,7 @@ export default function JobSeekerProfilePage({ params }: { params: { id: string 
               </div>
             </div>
           )}
-          
+
           {/* Job Preferences */}
           <div className="mb-8">
             <h2 className="text-2xl font-semibold mb-3">Job Preferences</h2>
@@ -232,17 +235,17 @@ export default function JobSeekerProfilePage({ params }: { params: { id: string 
                 <h3 className="font-medium text-gray-700">Job Types</h3>
                 <p>{jobSeeker.preferences.jobTypes.map(type => type.replace('_', ' ')).join(', ')}</p>
               </div>
-              
+
               <div>
                 <h3 className="font-medium text-gray-700">Preferred Locations</h3>
                 <p>{jobSeeker.preferences.locations.join(', ')}</p>
               </div>
-              
+
               <div>
                 <h3 className="font-medium text-gray-700">Remote Work</h3>
                 <p>{jobSeeker.preferences.remoteOnly ? 'Remote only' : 'Open to on-site'}</p>
               </div>
-              
+
               {jobSeeker.preferences.salaryExpectation && (
                 <div>
                   <h3 className="font-medium text-gray-700">Salary Expectation</h3>
@@ -253,27 +256,27 @@ export default function JobSeekerProfilePage({ params }: { params: { id: string 
                   </p>
                 </div>
               )}
-              
+
               <div>
                 <h3 className="font-medium text-gray-700">Preferred Industries</h3>
                 <p>{jobSeeker.preferences.industries.join(', ')}</p>
               </div>
-              
+
               <div>
                 <h3 className="font-medium text-gray-700">Preferred Job Titles</h3>
                 <p>{jobSeeker.preferences.jobTitles.join(', ')}</p>
               </div>
-              
+
               <div>
                 <h3 className="font-medium text-gray-700">Preferred Technologies</h3>
                 <p>{jobSeeker.preferences.technologies.join(', ')}</p>
               </div>
-              
+
               <div>
                 <h3 className="font-medium text-gray-700">Relocation</h3>
                 <p>{jobSeeker.preferences.relocationWilling ? 'Willing to relocate' : 'Not willing to relocate'}</p>
               </div>
-              
+
               {jobSeeker.preferences.availableFrom && (
                 <div>
                   <h3 className="font-medium text-gray-700">Available From</h3>
@@ -282,14 +285,14 @@ export default function JobSeekerProfilePage({ params }: { params: { id: string 
               )}
             </div>
           </div>
-          
+
           {/* Resume */}
           {jobSeeker.resumeUrl && (
             <div className="mb-8">
               <h2 className="text-2xl font-semibold mb-3">Resume</h2>
-              <a 
-                href={jobSeeker.resumeUrl} 
-                target="_blank" 
+              <a
+                href={jobSeeker.resumeUrl}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="bg-green-600 text-white px-4 py-2 rounded inline-flex items-center"
               >
@@ -301,10 +304,10 @@ export default function JobSeekerProfilePage({ params }: { params: { id: string 
             </div>
           )}
         </div>
-        
+
         {/* Actions */}
         <div className="bg-gray-50 p-6 flex justify-end">
-          <Link 
+          <Link
             href={`/job-seekers/${jobSeeker.id}/edit`}
             className="bg-green-600 text-white px-4 py-2 rounded"
           >

@@ -9,7 +9,7 @@ export default function CreateJobSeekerProfilePage() {
   const router = useRouter()
   const { createJobSeeker, loading, error } = useJobSeekers()
   const [formError, setFormError] = useState<string | null>(null)
-  
+
   const [formData, setFormData] = useState({
     userId: 'current-user', // In a real app, this would come from auth context
     firstName: '',
@@ -45,7 +45,7 @@ export default function CreateJobSeekerProfilePage() {
       proficiency: 'INTERMEDIATE'
     }],
     preferences: {
-      jobTypes: ['FULL_TIME'],
+      jobTypes: ['FULL_TIME'] as ('FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'FREELANCE' | 'INTERNSHIP')[],
       locations: [''],
       remoteOnly: false,
       industries: [''],
@@ -57,16 +57,16 @@ export default function CreateJobSeekerProfilePage() {
     resumeUrl: '',
     profilePictureUrl: ''
   })
-  
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
-    
+
     if (name.includes('.')) {
       const [parent, child] = name.split('.')
       setFormData(prev => ({
         ...prev,
         [parent]: {
-          ...prev[parent as keyof typeof prev],
+          ...(prev[parent as keyof typeof prev] as Record<string, any>),
           [child]: value
         }
       }))
@@ -77,16 +77,16 @@ export default function CreateJobSeekerProfilePage() {
       }))
     }
   }
-  
+
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target
-    
+
     if (name.includes('.')) {
       const [parent, child] = name.split('.')
       setFormData(prev => ({
         ...prev,
         [parent]: {
-          ...prev[parent as keyof typeof prev],
+          ...(prev[parent as keyof typeof prev] as Record<string, any>),
           [child]: checked
         }
       }))
@@ -97,7 +97,7 @@ export default function CreateJobSeekerProfilePage() {
       }))
     }
   }
-  
+
   const handleArrayChange = (index: number, value: string, field: 'skills' | 'preferences.locations' | 'preferences.industries' | 'preferences.jobTitles' | 'preferences.technologies') => {
     if (field === 'skills') {
       setFormData(prev => {
@@ -123,7 +123,7 @@ export default function CreateJobSeekerProfilePage() {
       })
     }
   }
-  
+
   const addArrayItem = (field: 'skills' | 'preferences.locations' | 'preferences.industries' | 'preferences.jobTitles' | 'preferences.technologies') => {
     if (field === 'skills') {
       setFormData(prev => ({
@@ -141,7 +141,7 @@ export default function CreateJobSeekerProfilePage() {
       }))
     }
   }
-  
+
   const removeArrayItem = (index: number, field: 'skills' | 'preferences.locations' | 'preferences.industries' | 'preferences.jobTitles' | 'preferences.technologies') => {
     if (field === 'skills') {
       setFormData(prev => {
@@ -167,7 +167,7 @@ export default function CreateJobSeekerProfilePage() {
       })
     }
   }
-  
+
   const handleExperienceChange = (index: number, field: string, value: string | boolean) => {
     setFormData(prev => {
       const newExperience = [...prev.experience]
@@ -181,7 +181,7 @@ export default function CreateJobSeekerProfilePage() {
       }
     })
   }
-  
+
   const addExperience = () => {
     setFormData(prev => ({
       ...prev,
@@ -201,7 +201,7 @@ export default function CreateJobSeekerProfilePage() {
       ]
     }))
   }
-  
+
   const removeExperience = (index: number) => {
     setFormData(prev => {
       const newExperience = [...prev.experience]
@@ -212,7 +212,7 @@ export default function CreateJobSeekerProfilePage() {
       }
     })
   }
-  
+
   const handleEducationChange = (index: number, field: string, value: string | boolean) => {
     setFormData(prev => {
       const newEducation = [...prev.education]
@@ -226,7 +226,7 @@ export default function CreateJobSeekerProfilePage() {
       }
     })
   }
-  
+
   const addEducation = () => {
     setFormData(prev => ({
       ...prev,
@@ -245,7 +245,7 @@ export default function CreateJobSeekerProfilePage() {
       ]
     }))
   }
-  
+
   const removeEducation = (index: number) => {
     setFormData(prev => {
       const newEducation = [...prev.education]
@@ -256,7 +256,7 @@ export default function CreateJobSeekerProfilePage() {
       }
     })
   }
-  
+
   const handleLanguageChange = (index: number, field: string, value: string) => {
     setFormData(prev => {
       const newLanguages = [...prev.languages]
@@ -270,7 +270,7 @@ export default function CreateJobSeekerProfilePage() {
       }
     })
   }
-  
+
   const addLanguage = () => {
     setFormData(prev => ({
       ...prev,
@@ -283,7 +283,7 @@ export default function CreateJobSeekerProfilePage() {
       ]
     }))
   }
-  
+
   const removeLanguage = (index: number) => {
     setFormData(prev => {
       const newLanguages = [...prev.languages]
@@ -294,13 +294,13 @@ export default function CreateJobSeekerProfilePage() {
       }
     })
   }
-  
-  const handleJobTypeChange = (type: string, checked: boolean) => {
+
+  const handleJobTypeChange = (type: 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'FREELANCE' | 'INTERNSHIP', checked: boolean) => {
     setFormData(prev => {
       const newJobTypes = checked
         ? [...prev.preferences.jobTypes, type]
         : prev.preferences.jobTypes.filter(t => t !== type)
-      
+
       return {
         ...prev,
         preferences: {
@@ -310,24 +310,29 @@ export default function CreateJobSeekerProfilePage() {
       }
     })
   }
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setFormError(null)
-    
+
     // Validation
     if (!formData.firstName || !formData.lastName || !formData.email || !formData.title || !formData.summary) {
       setFormError('Please fill in all required fields')
       return
     }
-    
+
     if (formData.skills.some(skill => !skill)) {
       setFormError('Please fill in all skills or remove empty ones')
       return
     }
-    
     try {
-      const result = await createJobSeeker(formData)
+      const result = await createJobSeeker({
+        ...formData,
+        languages: formData.languages.map(lang => ({
+          ...lang,
+          proficiency: lang.proficiency as "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | "NATIVE"
+        }))
+      })
       if (result) {
         router.push(`/job-seekers/${result.id}`)
       }
@@ -336,7 +341,7 @@ export default function CreateJobSeekerProfilePage() {
       console.error(err)
     }
   }
-  
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-4">
@@ -344,16 +349,16 @@ export default function CreateJobSeekerProfilePage() {
           &larr; Back to Job Seekers
         </Link>
       </div>
-      
+
       <div className="bg-white rounded-lg shadow-md p-6">
         <h1 className="text-3xl font-bold mb-6">Create Job Seeker Profile</h1>
-        
+
         {(error || formError) && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             {error || formError}
           </div>
         )}
-        
+
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Personal Information */}
           <div>
@@ -373,7 +378,7 @@ export default function CreateJobSeekerProfilePage() {
                   required
                 />
               </div>
-              
+
               <div>
                 <label className="block text-gray-700 font-medium mb-2" htmlFor="lastName">
                   Last Name *
@@ -388,7 +393,7 @@ export default function CreateJobSeekerProfilePage() {
                   required
                 />
               </div>
-              
+
               <div>
                 <label className="block text-gray-700 font-medium mb-2" htmlFor="email">
                   Email *
@@ -403,7 +408,7 @@ export default function CreateJobSeekerProfilePage() {
                   required
                 />
               </div>
-              
+
               <div>
                 <label className="block text-gray-700 font-medium mb-2" htmlFor="phone">
                   Phone
@@ -417,7 +422,7 @@ export default function CreateJobSeekerProfilePage() {
                   onChange={handleInputChange}
                 />
               </div>
-              
+
               <div>
                 <label className="block text-gray-700 font-medium mb-2" htmlFor="title">
                   Professional Title *
@@ -433,7 +438,7 @@ export default function CreateJobSeekerProfilePage() {
                   required
                 />
               </div>
-              
+
               <div>
                 <label className="block text-gray-700 font-medium mb-2" htmlFor="profilePictureUrl">
                   Profile Picture URL
@@ -448,7 +453,7 @@ export default function CreateJobSeekerProfilePage() {
                   onChange={handleInputChange}
                 />
               </div>
-              
+
               <div className="md:col-span-2">
                 <label className="block text-gray-700 font-medium mb-2" htmlFor="summary">
                   Professional Summary *
@@ -466,7 +471,7 @@ export default function CreateJobSeekerProfilePage() {
               </div>
             </div>
           </div>
-          
+
           {/* Skills */}
           <div>
             <h2 className="text-xl font-semibold mb-4 pb-2 border-b">Skills</h2>
@@ -500,7 +505,7 @@ export default function CreateJobSeekerProfilePage() {
               </div>
             ))}
           </div>
-          
+
           {/* Work Experience */}
           <div>
             <h2 className="text-xl font-semibold mb-4 pb-2 border-b">Work Experience</h2>
@@ -518,7 +523,7 @@ export default function CreateJobSeekerProfilePage() {
                     </button>
                   )}
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-gray-700 font-medium mb-2">
@@ -531,7 +536,7 @@ export default function CreateJobSeekerProfilePage() {
                       onChange={(e) => handleExperienceChange(index, 'title', e.target.value)}
                     />
                   </div>
-                  
+
                   <div>
                     <label className="block text-gray-700 font-medium mb-2">
                       Company
@@ -543,7 +548,7 @@ export default function CreateJobSeekerProfilePage() {
                       onChange={(e) => handleExperienceChange(index, 'company', e.target.value)}
                     />
                   </div>
-                  
+
                   <div>
                     <label className="block text-gray-700 font-medium mb-2">
                       Location
@@ -555,7 +560,7 @@ export default function CreateJobSeekerProfilePage() {
                       onChange={(e) => handleExperienceChange(index, 'location', e.target.value)}
                     />
                   </div>
-                  
+
                   <div className="flex items-center mt-6">
                     <input
                       type="checkbox"
@@ -568,7 +573,7 @@ export default function CreateJobSeekerProfilePage() {
                       I currently work here
                     </label>
                   </div>
-                  
+
                   <div>
                     <label className="block text-gray-700 font-medium mb-2">
                       Start Date
@@ -580,7 +585,7 @@ export default function CreateJobSeekerProfilePage() {
                       onChange={(e) => handleExperienceChange(index, 'startDate', e.target.value)}
                     />
                   </div>
-                  
+
                   {!exp.current && (
                     <div>
                       <label className="block text-gray-700 font-medium mb-2">
@@ -594,7 +599,7 @@ export default function CreateJobSeekerProfilePage() {
                       />
                     </div>
                   )}
-                  
+
                   <div className="md:col-span-2">
                     <label className="block text-gray-700 font-medium mb-2">
                       Description
@@ -609,7 +614,7 @@ export default function CreateJobSeekerProfilePage() {
                 </div>
               </div>
             ))}
-            
+
             <button
               type="button"
               className="mt-2 text-green-600 flex items-center"
@@ -621,7 +626,7 @@ export default function CreateJobSeekerProfilePage() {
               Add Another Experience
             </button>
           </div>
-          
+
           {/* Education */}
           <div>
             <h2 className="text-xl font-semibold mb-4 pb-2 border-b">Education</h2>
@@ -639,7 +644,7 @@ export default function CreateJobSeekerProfilePage() {
                     </button>
                   )}
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-gray-700 font-medium mb-2">
@@ -652,7 +657,7 @@ export default function CreateJobSeekerProfilePage() {
                       onChange={(e) => handleEducationChange(index, 'institution', e.target.value)}
                     />
                   </div>
-                  
+
                   <div>
                     <label className="block text-gray-700 font-medium mb-2">
                       Degree
@@ -664,7 +669,7 @@ export default function CreateJobSeekerProfilePage() {
                       onChange={(e) => handleEducationChange(index, 'degree', e.target.value)}
                     />
                   </div>
-                  
+
                   <div>
                     <label className="block text-gray-700 font-medium mb-2">
                       Field of Study
@@ -676,7 +681,7 @@ export default function CreateJobSeekerProfilePage() {
                       onChange={(e) => handleEducationChange(index, 'fieldOfStudy', e.target.value)}
                     />
                   </div>
-                  
+
                   <div className="flex items-center mt-6">
                     <input
                       type="checkbox"
@@ -689,7 +694,7 @@ export default function CreateJobSeekerProfilePage() {
                       I am currently studying here
                     </label>
                   </div>
-                  
+
                   <div>
                     <label className="block text-gray-700 font-medium mb-2">
                       Start Date
@@ -701,7 +706,7 @@ export default function CreateJobSeekerProfilePage() {
                       onChange={(e) => handleEducationChange(index, 'startDate', e.target.value)}
                     />
                   </div>
-                  
+
                   {!edu.current && (
                     <div>
                       <label className="block text-gray-700 font-medium mb-2">
@@ -715,7 +720,7 @@ export default function CreateJobSeekerProfilePage() {
                       />
                     </div>
                   )}
-                  
+
                   <div className="md:col-span-2">
                     <label className="block text-gray-700 font-medium mb-2">
                       Description
@@ -730,7 +735,7 @@ export default function CreateJobSeekerProfilePage() {
                 </div>
               </div>
             ))}
-            
+
             <button
               type="button"
               className="mt-2 text-green-600 flex items-center"
@@ -742,7 +747,7 @@ export default function CreateJobSeekerProfilePage() {
               Add Another Education
             </button>
           </div>
-          
+
           {/* Languages */}
           <div>
             <h2 className="text-xl font-semibold mb-4 pb-2 border-b">Languages</h2>
@@ -785,11 +790,11 @@ export default function CreateJobSeekerProfilePage() {
               </div>
             ))}
           </div>
-          
+
           {/* Job Preferences */}
           <div>
             <h2 className="text-xl font-semibold mb-4 pb-2 border-b">Job Preferences</h2>
-            
+
             <div className="mb-4">
               <label className="block text-gray-700 font-medium mb-2">
                 Job Types
@@ -847,7 +852,7 @@ export default function CreateJobSeekerProfilePage() {
                 </div>
               </div>
             </div>
-            
+
             <div className="mb-4">
               <label className="block text-gray-700 font-medium mb-2">
                 Preferred Locations
@@ -881,7 +886,7 @@ export default function CreateJobSeekerProfilePage() {
                 </div>
               ))}
             </div>
-            
+
             <div className="mb-4 flex items-center">
               <input
                 type="checkbox"
@@ -895,7 +900,7 @@ export default function CreateJobSeekerProfilePage() {
                 Remote work only
               </label>
             </div>
-            
+
             <div className="mb-4 flex items-center">
               <input
                 type="checkbox"
@@ -909,7 +914,7 @@ export default function CreateJobSeekerProfilePage() {
                 Willing to relocate
               </label>
             </div>
-            
+
             <div className="mb-4">
               <label className="block text-gray-700 font-medium mb-2" htmlFor="availableFrom">
                 Available From
@@ -923,7 +928,7 @@ export default function CreateJobSeekerProfilePage() {
                 onChange={handleInputChange}
               />
             </div>
-            
+
             <div className="mb-4">
               <label className="block text-gray-700 font-medium mb-2">
                 Preferred Industries
@@ -957,7 +962,7 @@ export default function CreateJobSeekerProfilePage() {
                 </div>
               ))}
             </div>
-            
+
             <div className="mb-4">
               <label className="block text-gray-700 font-medium mb-2">
                 Preferred Job Titles
@@ -991,7 +996,7 @@ export default function CreateJobSeekerProfilePage() {
                 </div>
               ))}
             </div>
-            
+
             <div className="mb-4">
               <label className="block text-gray-700 font-medium mb-2">
                 Preferred Technologies
@@ -1026,7 +1031,7 @@ export default function CreateJobSeekerProfilePage() {
               ))}
             </div>
           </div>
-          
+
           {/* Resume */}
           <div>
             <h2 className="text-xl font-semibold mb-4 pb-2 border-b">Resume</h2>
@@ -1048,7 +1053,7 @@ export default function CreateJobSeekerProfilePage() {
               </p>
             </div>
           </div>
-          
+
           {/* Submit */}
           <div className="flex justify-end">
             <button

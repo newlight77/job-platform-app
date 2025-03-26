@@ -5,17 +5,21 @@ import { useJobOffers } from '../../../bounded-contexts/job-offering-context/hoo
 import Link from 'next/link'
 import { JobOffer } from '../../../bounded-contexts/job-offering-context/domain/types'
 
-export default function JobOfferDetailsPage({ params }: { params: { id: string } }) {
+type Params = Promise<{ id: string }>
+
+export default async function JobOfferDetailsPage({ params }: { params: Params }) {
+  const { id } = await params;
+
   const [jobOffer, setJobOffer] = useState<JobOffer | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { getJobOfferById } = useJobOffers()
-  
+
   useEffect(() => {
     const fetchJobOffer = async () => {
       try {
         setLoading(true)
-        const offer = await getJobOfferById(params.id)
+        const offer = await getJobOfferById(id)
         if (offer) {
           setJobOffer(offer)
         } else {
@@ -28,10 +32,10 @@ export default function JobOfferDetailsPage({ params }: { params: { id: string }
         setLoading(false)
       }
     }
-    
+
     fetchJobOffer()
-  }, [params.id, getJobOfferById])
-  
+  }, [id, getJobOfferById])
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -41,7 +45,7 @@ export default function JobOfferDetailsPage({ params }: { params: { id: string }
       </div>
     )
   }
-  
+
   if (error || !jobOffer) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -56,7 +60,7 @@ export default function JobOfferDetailsPage({ params }: { params: { id: string }
       </div>
     )
   }
-  
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-4">
@@ -64,7 +68,7 @@ export default function JobOfferDetailsPage({ params }: { params: { id: string }
           &larr; Back to Job Offers
         </Link>
       </div>
-      
+
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="border-b pb-4 mb-4">
           <h1 className="text-3xl font-bold">{jobOffer.title}</h1>
@@ -81,12 +85,12 @@ export default function JobOfferDetailsPage({ params }: { params: { id: string }
             )}
           </div>
         </div>
-        
+
         <div className="mb-6">
           <h2 className="text-xl font-semibold mb-2">Job Description</h2>
           <p className="text-gray-700 whitespace-pre-line">{jobOffer.description}</p>
         </div>
-        
+
         <div className="mb-6">
           <h2 className="text-xl font-semibold mb-2">Requirements</h2>
           <ul className="list-disc pl-5 text-gray-700">
@@ -95,7 +99,7 @@ export default function JobOfferDetailsPage({ params }: { params: { id: string }
             ))}
           </ul>
         </div>
-        
+
         <div className="mb-6">
           <h2 className="text-xl font-semibold mb-2">Responsibilities</h2>
           <ul className="list-disc pl-5 text-gray-700">
@@ -104,7 +108,7 @@ export default function JobOfferDetailsPage({ params }: { params: { id: string }
             ))}
           </ul>
         </div>
-        
+
         <div className="mb-6">
           <h2 className="text-xl font-semibold mb-2">Additional Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -132,9 +136,9 @@ export default function JobOfferDetailsPage({ params }: { params: { id: string }
             </div>
           </div>
         </div>
-        
+
         <div className="mt-8 flex justify-center">
-          <Link 
+          <Link
             href={`/job-offers/${jobOffer.id}/apply`}
             className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium text-lg hover:bg-blue-700 transition-colors"
           >

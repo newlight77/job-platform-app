@@ -6,18 +6,20 @@ import { RecommendationPreferences } from '../../../../bounded-contexts/recommen
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-export default function RecommendationPreferencesPage({ params }: { params: { id: string } }) {
+type Params = Promise<{ id: string }>
+export default async function RecommendationPreferencesPage({ params }: { params: Params }) {
+  const { id } = await params;
   const router = useRouter()
   const { getRecommendationPreferences, updateRecommendationPreferences, loading, error } = useRecommendations()
   const [formError, setFormError] = useState<string | null>(null)
   const [preferences, setPreferences] = useState<RecommendationPreferences | null>(null)
   const [formLoading, setFormLoading] = useState(true)
-  
+
   useEffect(() => {
     const fetchPreferences = async () => {
       try {
         setFormLoading(true)
-        const prefs = await getRecommendationPreferences(params.id)
+        const prefs = await getRecommendationPreferences(id)
         if (prefs) {
           setPreferences(prefs)
         }
@@ -28,38 +30,38 @@ export default function RecommendationPreferencesPage({ params }: { params: { id
         setFormLoading(false)
       }
     }
-    
+
     fetchPreferences()
-  }, [params.id, getRecommendationPreferences])
-  
+  }, [id, getRecommendationPreferences])
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, type, checked, value } = e.target
-    
+
     setPreferences(prev => {
       if (!prev) return null
-      
+
       return {
         ...prev,
         [name]: type === 'checkbox' ? checked : type === 'number' ? parseInt(value) : value
       }
     })
   }
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setFormError(null)
-    
+
     if (!preferences) return
-    
+
     try {
-      await updateRecommendationPreferences(params.id, preferences)
+      await updateRecommendationPreferences(id, preferences)
       router.push('/recommendations')
     } catch (err) {
       setFormError('Failed to update preferences')
       console.error(err)
     }
   }
-  
+
   if (formLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -69,7 +71,7 @@ export default function RecommendationPreferencesPage({ params }: { params: { id
       </div>
     )
   }
-  
+
   if (!preferences) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -84,7 +86,7 @@ export default function RecommendationPreferencesPage({ params }: { params: { id
       </div>
     )
   }
-  
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-4">
@@ -92,16 +94,16 @@ export default function RecommendationPreferencesPage({ params }: { params: { id
           &larr; Back to Recommendations
         </Link>
       </div>
-      
+
       <div className="bg-white rounded-lg shadow-md p-6">
         <h1 className="text-3xl font-bold mb-6">Recommendation Preferences</h1>
-        
+
         {(error || formError) && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             {error || formError}
           </div>
         )}
-        
+
         <form onSubmit={handleSubmit}>
           <div className="space-y-6">
             <div>
@@ -120,7 +122,7 @@ export default function RecommendationPreferencesPage({ params }: { params: { id
                     Prioritize skill matches
                   </label>
                 </div>
-                
+
                 <div className="flex items-center">
                   <input
                     type="checkbox"
@@ -134,7 +136,7 @@ export default function RecommendationPreferencesPage({ params }: { params: { id
                     Prioritize location matches
                   </label>
                 </div>
-                
+
                 <div className="flex items-center">
                   <input
                     type="checkbox"
@@ -150,7 +152,7 @@ export default function RecommendationPreferencesPage({ params }: { params: { id
                 </div>
               </div>
             </div>
-            
+
             <div>
               <h2 className="text-xl font-semibold mb-4 pb-2 border-b">Filtering Options</h2>
               <div className="space-y-4">
@@ -167,7 +169,7 @@ export default function RecommendationPreferencesPage({ params }: { params: { id
                     Exclude jobs I've already applied to
                   </label>
                 </div>
-                
+
                 <div className="flex items-center">
                   <input
                     type="checkbox"
@@ -181,7 +183,7 @@ export default function RecommendationPreferencesPage({ params }: { params: { id
                     Exclude jobs I've been rejected from
                   </label>
                 </div>
-                
+
                 <div>
                   <label htmlFor="minimumMatchScore" className="block text-gray-700 mb-2">
                     Minimum match score (%)
@@ -200,7 +202,7 @@ export default function RecommendationPreferencesPage({ params }: { params: { id
               </div>
             </div>
           </div>
-          
+
           <div className="mt-8 flex justify-end">
             <button
               type="button"

@@ -1,15 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { useJobOffers } from '../../../../bounded-contexts/job-offering-context/hooks/useJobOffers'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useJobOffers } from '@/bounded-contexts/job-offering-context/hooks/useJobOffers'
 
 export default function CreateJobOfferPage() {
   const router = useRouter()
   const { createJobOffer, loading, error } = useJobOffers()
   const [formError, setFormError] = useState<string | null>(null)
-  
+
   const [formData, setFormData] = useState({
     title: '',
     company: '',
@@ -17,7 +17,7 @@ export default function CreateJobOfferPage() {
     description: '',
     requirements: [''],
     responsibilities: [''],
-    employmentType: 'FULL_TIME',
+    employmentType: 'FULL_TIME' as 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'FREELANCE' | 'INTERNSHIP',
     remote: false,
     contactEmail: '',
     salary: {
@@ -27,16 +27,16 @@ export default function CreateJobOfferPage() {
     },
     deadline: ''
   })
-  
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
-    
+
     if (name.includes('.')) {
       const [parent, child] = name.split('.')
       setFormData(prev => ({
         ...prev,
         [parent]: {
-          ...prev[parent as keyof typeof prev],
+          ...(prev[parent as keyof typeof prev] as Record<string, any>),
           [child]: value
         }
       }))
@@ -47,7 +47,7 @@ export default function CreateJobOfferPage() {
       }))
     }
   }
-  
+
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target
     setFormData(prev => ({
@@ -55,7 +55,7 @@ export default function CreateJobOfferPage() {
       [name]: checked
     }))
   }
-  
+
   const handleArrayChange = (index: number, value: string, field: 'requirements' | 'responsibilities') => {
     setFormData(prev => {
       const newArray = [...prev[field]]
@@ -66,14 +66,14 @@ export default function CreateJobOfferPage() {
       }
     })
   }
-  
+
   const addArrayItem = (field: 'requirements' | 'responsibilities') => {
     setFormData(prev => ({
       ...prev,
       [field]: [...prev[field], '']
     }))
   }
-  
+
   const removeArrayItem = (index: number, field: 'requirements' | 'responsibilities') => {
     setFormData(prev => {
       const newArray = [...prev[field]]
@@ -84,22 +84,22 @@ export default function CreateJobOfferPage() {
       }
     })
   }
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setFormError(null)
-    
+
     // Validation
     if (!formData.title || !formData.company || !formData.location || !formData.description || !formData.contactEmail) {
       setFormError('Please fill in all required fields')
       return
     }
-    
+
     if (formData.requirements.some(req => !req) || formData.responsibilities.some(resp => !resp)) {
       setFormError('Please fill in all requirements and responsibilities or remove empty ones')
       return
     }
-    
+
     try {
       // Format the data for submission
       const jobOfferData = {
@@ -108,9 +108,11 @@ export default function CreateJobOfferPage() {
           min: formData.salary.min ? parseInt(formData.salary.min) : undefined,
           max: formData.salary.max ? parseInt(formData.salary.max) : undefined,
           currency: formData.salary.currency
-        } : undefined
+        } : undefined,
+        postedDate: new Date().toISOString(),
+        status: 'PUBLISHED' as 'DRAFT' | 'PUBLISHED' | 'CLOSED'
       }
-      
+
       const result = await createJobOffer(jobOfferData)
       if (result) {
         router.push(`/job-offers/${result.id}`)
@@ -120,7 +122,7 @@ export default function CreateJobOfferPage() {
       console.error(err)
     }
   }
-  
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-4">
@@ -128,16 +130,16 @@ export default function CreateJobOfferPage() {
           &larr; Back to Job Offers
         </Link>
       </div>
-      
+
       <div className="bg-white rounded-lg shadow-md p-6">
         <h1 className="text-3xl font-bold mb-6">Post a New Job Offer</h1>
-        
+
         {(error || formError) && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             {error || formError}
           </div>
         )}
-        
+
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
@@ -154,7 +156,7 @@ export default function CreateJobOfferPage() {
                 required
               />
             </div>
-            
+
             <div>
               <label className="block text-gray-700 font-medium mb-2" htmlFor="company">
                 Company Name *
@@ -169,7 +171,7 @@ export default function CreateJobOfferPage() {
                 required
               />
             </div>
-            
+
             <div>
               <label className="block text-gray-700 font-medium mb-2" htmlFor="location">
                 Location *
@@ -184,7 +186,7 @@ export default function CreateJobOfferPage() {
                 required
               />
             </div>
-            
+
             <div>
               <label className="block text-gray-700 font-medium mb-2" htmlFor="employmentType">
                 Employment Type *
@@ -204,7 +206,7 @@ export default function CreateJobOfferPage() {
                 <option value="INTERNSHIP">Internship</option>
               </select>
             </div>
-            
+
             <div className="md:col-span-2">
               <label className="block text-gray-700 font-medium mb-2" htmlFor="description">
                 Job Description *
@@ -219,7 +221,7 @@ export default function CreateJobOfferPage() {
                 required
               ></textarea>
             </div>
-            
+
             <div className="md:col-span-2">
               <label className="block text-gray-700 font-medium mb-2">
                 Requirements *
@@ -254,7 +256,7 @@ export default function CreateJobOfferPage() {
                 </div>
               ))}
             </div>
-            
+
             <div className="md:col-span-2">
               <label className="block text-gray-700 font-medium mb-2">
                 Responsibilities *
@@ -289,7 +291,7 @@ export default function CreateJobOfferPage() {
                 </div>
               ))}
             </div>
-            
+
             <div>
               <label className="block text-gray-700 font-medium mb-2">
                 Salary Range (Optional)
@@ -324,7 +326,7 @@ export default function CreateJobOfferPage() {
                 />
               </div>
             </div>
-            
+
             <div>
               <label className="block text-gray-700 font-medium mb-2" htmlFor="deadline">
                 Application Deadline (Optional)
@@ -338,7 +340,7 @@ export default function CreateJobOfferPage() {
                 onChange={handleInputChange}
               />
             </div>
-            
+
             <div>
               <label className="block text-gray-700 font-medium mb-2" htmlFor="contactEmail">
                 Contact Email *
@@ -353,7 +355,7 @@ export default function CreateJobOfferPage() {
                 required
               />
             </div>
-            
+
             <div className="flex items-center">
               <input
                 type="checkbox"
@@ -368,7 +370,7 @@ export default function CreateJobOfferPage() {
               </label>
             </div>
           </div>
-          
+
           <div className="flex justify-end">
             <button
               type="button"

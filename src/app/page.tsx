@@ -4,19 +4,21 @@ import Link from 'next/link'
 import { useJobOffers } from '../bounded-contexts/job-offering-context/hooks/useJobOffers'
 import { useJobSeekers } from '../bounded-contexts/job-seeker-context/hooks/useJobSeekers'
 import { useEffect, useState } from 'react'
+import { JobOffer } from '../bounded-contexts/job-offering-context/domain/types'
+import { JobSeeker } from '../bounded-contexts/job-seeker-context/domain/types'
 
 export default function HomePage() {
   const { jobOffers, loading: jobOffersLoading } = useJobOffers()
   const { jobSeekers, loading: jobSeekersLoading } = useJobSeekers()
-  const [featuredJobs, setFeaturedJobs] = useState([])
-  const [featuredProfiles, setFeaturedProfiles] = useState([])
+  const [featuredJobs, setFeaturedJobs] = useState<JobOffer[]>([])
+  const [featuredProfiles, setFeaturedProfiles] = useState<JobSeeker[]>([])
 
   useEffect(() => {
     // Select a few featured jobs
     if (jobOffers.length > 0) {
       setFeaturedJobs(jobOffers.slice(0, 3))
     }
-    
+
     // Select a few featured profiles
     if (jobSeekers.length > 0) {
       setFeaturedProfiles(jobSeekers.slice(0, 3))
@@ -69,7 +71,7 @@ export default function HomePage() {
           <h2 className="text-2xl font-bold">Featured Job Offers</h2>
           <Link href="/job-offers" className="text-blue-600 hover:underline">View All</Link>
         </div>
-        
+
         {jobOffersLoading ? (
           <div className="flex justify-center items-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -89,7 +91,7 @@ export default function HomePage() {
                       </span>
                     ))}
                   </div>
-                  <Link 
+                  <Link
                     href={`/job-offers/${job.id}`}
                     className="block text-center bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
                   >
@@ -112,7 +114,7 @@ export default function HomePage() {
           <h2 className="text-2xl font-bold">Featured Talent Profiles</h2>
           <Link href="/job-seekers" className="text-green-600 hover:underline">View All</Link>
         </div>
-        
+
         {jobSeekersLoading ? (
           <div className="flex justify-center items-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
@@ -124,8 +126,8 @@ export default function HomePage() {
                 <div className="p-6">
                   <div className="flex items-center mb-4">
                     {profile.profilePictureUrl ? (
-                      <img 
-                        src={profile.profilePictureUrl} 
+                      <img
+                        src={profile.profilePictureUrl}
                         alt={`${profile.firstName} ${profile.lastName}`}
                         className="w-12 h-12 rounded-full object-cover mr-4"
                       />
@@ -146,7 +148,7 @@ export default function HomePage() {
                       </span>
                     ))}
                   </div>
-                  <Link 
+                  <Link
                     href={`/job-seekers/${profile.id}`}
                     className="block text-center bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors"
                   >
